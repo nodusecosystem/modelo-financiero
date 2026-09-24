@@ -1,0 +1,1027 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nodus · Simulador financiero</title>
+<style>
+:root{--bg:#07111f;--panel:#0d1a2b;--line:#20324a;--text:#edf5ff;--muted:#91a4ba;--accent:#63a7ff;--good:#35d39a;--warn:#ffca6b;--bad:#ff6f7d}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 18% 0%,#102542 0,#07111f 45%,#050b14 100%);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:13px}
+.wrap{max-width:1600px;margin:0 auto;padding:12px 14px 20px}
+h1{font-size:20px;margin:0;letter-spacing:-.02em}
+h3{font-size:12.5px;margin:0 0 8px;color:#dce9f8}
+p{margin:4px 0;color:var(--muted);line-height:1.55}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+header .sub{font-size:11.5px;margin-top:3px;max-width:760px}
+.tools{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.tools .sep{width:1px;height:22px;background:var(--line)}
+button,.filebtn{font:inherit;font-size:11.5px;border:1px solid #315172;background:#10243c;color:#eaf4ff;border-radius:8px;padding:6px 9px;cursor:pointer;white-space:nowrap}
+button:hover,.filebtn:hover{background:#16304f}
+button.primary{background:#2567aa;border-color:#3988d6}
+button.danger{background:#351923;border-color:#68313b;color:#ffb4bd}
+.filebtn{display:inline-block}
+.status{font-size:10.5px;color:var(--good);min-width:52px;transition:opacity .5s}
+.kpis{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px;margin-bottom:10px}
+.kpi{background:linear-gradient(180deg,rgba(16,31,51,.95),rgba(10,22,37,.95));border:1px solid var(--line);border-radius:11px;padding:8px 10px;min-height:64px}
+.kpi .label{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.kpi .value{font-size:15.5px;font-weight:750;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi .sub{font-size:9.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.layout{display:grid;grid-template-columns:326px minmax(0,1fr);gap:10px;align-items:start}
+.content{min-width:0}
+.sidebar{position:sticky;top:10px;max-height:calc(100vh - 20px);overflow:auto;padding:10px}
+.card{background:linear-gradient(180deg,rgba(16,31,51,.97),rgba(10,22,37,.97));border:1px solid var(--line);border-radius:13px;padding:11px 12px;box-shadow:0 12px 30px rgba(0,0,0,.18)}
+details{border:1px solid #1d3049;border-radius:9px;margin-bottom:7px;background:#0a1728;overflow:hidden}
+details>summary{cursor:pointer;padding:7px 9px;font-weight:650;font-size:11.5px;display:flex;justify-content:space-between;gap:8px;align-items:center;list-style:none}
+details>summary::-webkit-details-marker{display:none}
+details>summary .sum{color:var(--accent);font-weight:600;font-size:10.5px;white-space:nowrap}
+details>summary::after{content:"+";color:var(--muted);font-weight:600}
+details[open]>summary::after{content:"–"}
+.dbody{padding:0 9px 9px}
+label{display:block;font-size:10px;color:#b9c8da;margin:6px 0 3px}
+input,select{width:100%;background:#081525;color:var(--text);border:1px solid #29405d;border-radius:7px;padding:5px 7px;font:inherit;font-size:11.5px}
+input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px #63a7ff1c}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+.item{border:1px solid #1d3049;border-radius:8px;padding:6px;margin:5px 0;background:#0a1728}
+.itemhead{display:flex;gap:5px;align-items:center;margin-bottom:4px}
+.itemhead input{flex:1;font-weight:600}
+.itemhead button{padding:3px 6px;font-size:11px;line-height:1}
+.itemgrid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.addrow{display:flex;gap:5px;margin-top:6px}
+.addrow button{flex:1}
+.hint{font-size:10px;color:var(--muted);margin-top:6px;line-height:1.5}
+.tabs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:9px}
+.tabs button{border-radius:999px;padding:5px 11px;font-size:11.5px}
+.tabs button.active{background:#2567aa;border-color:#3988d6;color:#fff}
+.tabpane{display:none}
+.tabpane.active{display:block}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.g2:last-child{margin-bottom:0}
+.cards4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:10px}
+.mini{background:#0a1728;border:1px solid #1d3049;border-radius:10px;padding:8px 10px;min-height:60px}
+.mini .label{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.mini .value{font-size:14.5px;font-weight:750;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini .sub{font-size:9.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+table{width:100%;border-collapse:collapse;font-size:11.5px}
+th,td{padding:4.5px 6px;border-bottom:1px solid #1c2c42;text-align:right;vertical-align:top}
+th:first-child,td:first-child{text-align:left}
+th{color:#93a7bd;font-weight:650;font-size:9.5px;text-transform:uppercase;letter-spacing:.04em}
+tr.total td{font-weight:750;border-top:1px solid #2f4a6b;background:#0c1c2e}
+tr.hl td{background:#12263f}
+td.pos{color:var(--good)}
+td.neg{color:var(--bad)}
+.left{text-align:left}
+canvas{width:100%;height:186px;display:block}
+.noteBox{border-left:3px solid var(--accent);padding:8px 11px;background:#09182a;border-radius:8px;color:#b9c8da;font-size:11.5px;line-height:1.6}
+.noteBox strong{color:#eaf4ff}
+.good{color:var(--good)}
+.bad{color:var(--bad)}
+.warn{color:var(--warn)}
+.footer{color:#6c8098;font-size:10px;margin-top:12px;line-height:1.6}
+ul.tight{margin:4px 0;padding-left:17px}
+ul.tight li{margin:3px 0;color:var(--muted);line-height:1.55}
+.presets{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#0a1728;border:1px solid var(--line);border-radius:11px;padding:7px 10px;margin-bottom:10px}
+.ptitle{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:650}
+.pgroup{display:flex;align-items:center;gap:5px;border-left:1px solid var(--line);padding-left:10px}
+.pgroup .plabel{font-size:9.5px;color:#93a7bd;text-transform:uppercase;letter-spacing:.05em;font-weight:650;margin-right:2px}
+.pgroup button{font-size:11px;padding:5px 9px}
+.pgroup button.active{background:#2567aa;border-color:#3988d6;color:#fff;box-shadow:0 0 0 2px #63a7ff33}
+.phint{font-size:10px;color:var(--muted);margin-left:auto}
+@media(max-width:900px){.phint{margin-left:0;width:100%}}
+@media(max-width:1200px){.kpis{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:1150px){.layout{grid-template-columns:1fr}.sidebar{position:static;max-height:none}}
+@media(max-width:820px){.g2{grid-template-columns:1fr}.cards4{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.kpis{grid-template-columns:1fr 1fr}.row3{grid-template-columns:1fr}.wrap{padding:10px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div>
+    <h1>Nodus · Simulador financiero</h1>
+    <p class="sub">Cambia clientes, precios, costos y equipo en el panel izquierdo: todo se recalcula al instante. Si algo no es claro, abre la pestaña <strong>Guía</strong>.</p>
+  </div>
+  <div class="tools">
+    <button id="save" class="primary" title="Guarda la configuración actual en este navegador">Guardar</button>
+    <button id="load" title="Recupera la última configuración guardada en este navegador">Cargar</button>
+    <button id="clear" title="Elimina la configuración guardada en el navegador (no cambia los valores en pantalla)">Borrar guardado</button>
+    <button id="exportBtn" title="Descarga la configuración actual como archivo .json para compartirla">Exportar</button>
+    <label class="filebtn" title="Carga un archivo .json exportado anteriormente">Importar<input id="importFile" type="file" accept=".json" hidden></label>
+    <span class="status" id="status"></span>
+  </div>
+</header>
+
+<div class="presets">
+  <span class="ptitle">Escenarios rápidos</span>
+  <span class="pgroup">
+    <span class="plabel">Equipo</span>
+    <button id="presetStaff3" title="Pone el costo empresa de las personas cuyo nombre contiene 'Socio' en $3.000.000 (etapa inicial). No toca los clientes.">Socios a $3M</button>
+    <button id="presetStaff6" title="Pone el costo empresa de las personas cuyo nombre contiene 'Socio' en $6.000.000 (etapa consolidada, equivale a ~$5M de salario + cargas). No toca los clientes.">Socios a $6M</button>
+  </span>
+  <span class="pgroup">
+    <span class="plabel">Cartera de clientes</span>
+    <button id="presetCol8" title="Deja 8 clientes en el segmento en COP (Colombia) y 0 en los demás segmentos.">8 Colombia</button>
+    <button id="presetMix" title="Deja 4 clientes en el segmento en COP (Colombia) y 4 en el segmento en USD (internacional).">4 Col + 4 Intl</button>
+    <button id="presetIntl8" title="Deja 8 clientes en el segmento en USD (internacional) y 0 en los demás segmentos.">8 internacionales</button>
+  </span>
+  <span class="pgroup">
+    <span class="plabel">Todo</span>
+    <button id="presetBase" title="Vuelve a todos los valores del informe: 8 clientes Colombia, socios a $3M, TRM $3.200, herramientas y gastos iniciales.">Restaurar base</button>
+  </span>
+  <span class="phint">Los escenarios de equipo y de cartera son independientes: puedes combinarlos. Ninguno borra lo que tengas guardado.</span>
+</div>
+
+<section id="kpis" class="kpis"></section>
+
+<div class="layout">
+
+<aside class="card sidebar">
+  <details open>
+    <summary><span>1 · Supuestos generales</span><span class="sum" id="sumGeneral"></span></summary>
+    <div class="dbody">
+      <div class="row">
+        <div><label title="Tasa Representativa del Mercado: cuántos pesos vale 1 dólar">TRM (COP por USD)</label><input id="fx" type="number" min="0" step="10"></div>
+        <div><label title="Solo para simulación; no reemplaza la liquidación tributaria real">Impuesto sobre utilidad (%)</label><input id="tax" type="number" min="0" max="100" step="1"></div>
+      </div>
+      <div class="row">
+        <div><label title="Se descuenta como gasto según el % de los ingresos">Reserva / contingencia (% ing.)</label><input id="reserve" type="number" min="0" max="100" step="1"></div>
+        <div><label title="Clientes que quieren alcanzar; sirve para medir avance">Meta de clientes</label><input id="target" type="number" min="0" step="1"></div>
+      </div>
+      <p class="hint">La TRM convierte a pesos todo lo que esté en USD. El impuesto y la reserva son supuestos de planeación: edítalos según tu realidad.</p>
+    </div>
+  </details>
+
+  <details open>
+    <summary><span>2 · Clientes (cartera)</span><span class="sum" id="sumClients"></span></summary>
+    <div class="dbody">
+      <div id="clients"></div>
+      <div class="addrow"><button class="primary" id="addClient">+ Segmento</button><button id="resetClients">Restablecer</button></div>
+      <p class="hint">Cada segmento es un tipo de cliente. <strong>Cantidad</strong> = clientes activos hoy. <strong>Ticket</strong> = lo que paga cada uno al mes. El costo de contenido es (costo editor − aporte del cliente) × TRM: Nodus solo asume su parte.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span>3 · Equipo y nómina</span><span class="sum" id="sumStaff"></span></summary>
+    <div class="dbody">
+      <div id="staff"></div>
+      <div class="addrow"><button class="primary" id="addStaff">+ Persona</button><button id="resetStaff">Restablecer</button></div>
+      <p class="hint"><strong>Costo empresa</strong> = salario + prestaciones y cargas. <strong>Horas a clientes</strong> = horas al mes que esa persona trabaja para clientes (ej.: 160 h × 65% de dedicación a Nodus × 75% de ese tiempo a clientes ≈ 78 h).</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span>4 · Tecnología</span><span class="sum" id="sumTech"></span></summary>
+    <div class="dbody">
+      <div id="tech"></div>
+      <div class="addrow"><button class="primary" id="addTech">+ Herramienta</button><button id="resetTech">Restablecer</button></div>
+      <p class="hint">Solo herramientas que paga Nodus. Si el cliente paga una herramienta directamente (CRM, hosting, pauta), no va aquí.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span>5 · Otros gastos operativos</span><span class="sum" id="sumOps"></span></summary>
+    <div class="dbody">
+      <div id="ops"></div>
+      <div class="addrow"><button class="primary" id="addOps">+ Gasto</button><button id="resetOps">Restablecer</button></div>
+      <p class="hint">Marketing de Nodus, legal, contabilidad, administración y otros gastos fijos.</p>
+    </div>
+  </details>
+</aside>
+
+<main class="content">
+  <nav class="tabs">
+    <button data-tab="resumen" class="active">Resumen</button>
+    <button data-tab="escenarios">Escenarios y sensibilidad</button>
+    <button data-tab="capacidad">Capacidad y contratación</button>
+    <button data-tab="clientes">Economía por cliente</button>
+    <button data-tab="avanzado">Adquisición y caja</button>
+    <button data-tab="guia">Guía</button>
+  </nav>
+
+  <section id="tab-resumen" class="tabpane active">
+    <section class="card" style="margin-bottom:10px">
+      <h3>Lectura rápida</h3>
+      <div class="noteBox" id="quickRead"></div>
+    </section>
+    <div class="g2">
+      <section class="card">
+        <h3>Estado de resultados mensual</h3>
+        <table id="pnl"></table>
+        <p class="hint">Ingresos − costos directos = margen bruto. Margen bruto − gastos operativos = resultado operativo. Resultado − impuestos = utilidad neta.</p>
+      </section>
+      <section class="card">
+        <h3>Indicadores clave</h3>
+        <table id="ratios"></table>
+        <p class="hint">Sirven para comparar meses y escenarios: lo importante es que los márgenes se mantengan sanos mientras crecen los ingresos.</p>
+      </section>
+    </div>
+    <div class="g2">
+      <section class="card"><h3>Ingresos por segmento</h3><canvas id="revenueChart"></canvas></section>
+      <section class="card"><h3>A dónde se va el dinero</h3><canvas id="costChart"></canvas></section>
+    </div>
+  </section>
+
+  <section id="tab-escenarios" class="tabpane">
+    <div class="g2">
+      <section class="card">
+        <h3>Resultado operativo según número de clientes</h3>
+        <canvas id="breakChart"></canvas>
+        <p class="hint">Cada barra usa la contribución promedio de tu cartera actual. La línea amarilla marca el punto de equilibrio: donde el resultado pasa de rojo (pérdida) a verde (ganancia).</p>
+      </section>
+      <section class="card">
+        <h3>Misma cantidad de clientes, distinta composición</h3>
+        <canvas id="mixChart"></canvas>
+        <p class="hint">Compara la utilidad neta si tus N clientes actuales fueran todos de un solo tipo frente a la mezcla que tienes hoy.</p>
+      </section>
+    </div>
+    <div class="g2">
+      <section class="card">
+        <h3>Sensibilidad: utilidad neta según clientes y tipo</h3>
+        <table id="sens"></table>
+        <p class="hint">Cifras en millones de COP. Filas = total de clientes; columnas = composición. Verde = utilidad; rojo = pérdida. La fila resaltada es tu situación actual.</p>
+      </section>
+      <section class="card">
+        <h3>Sensibilidad a la TRM</h3>
+        <table id="trmTable"></table>
+        <p class="hint">Cuánto cambia el resultado si la TRM sube o baja 10% o 20%. Afecta los ingresos cobrados en USD y también el costo de contenido, que está en USD.</p>
+      </section>
+    </div>
+  </section>
+
+  <section id="tab-capacidad" class="tabpane">
+    <div id="capKpis" class="cards4"></div>
+    <div class="g2">
+      <section class="card">
+        <h3>Horas de trabajo: capacidad vs demanda</h3>
+        <canvas id="capChart"></canvas>
+        <p class="hint">La línea azul es la carga de trabajo según el número de clientes; la línea punteada, las horas disponibles del equipo. Donde se cruzan, hace falta contratar.</p>
+      </section>
+      <section class="card">
+        <h3>Horas por persona</h3>
+        <table id="hoursTable"></table>
+        <p class="hint">Solo cuentan las horas dedicadas a clientes. El trabajo interno (reuniones, ventas, administración) ya está descontado en ese número.</p>
+      </section>
+    </div>
+    <div class="g2">
+      <section class="card">
+        <h3>¿Cuándo contratar?</h3>
+        <div class="noteBox" id="hireBox"></div>
+        <div class="row" style="margin-top:8px">
+          <div><label>Costo empresa de una persona nueva (COP/mes)</label><input id="hireCost" type="number" step="100000"></div>
+          <div><label>Horas a clientes de esa persona (h/mes)</label><input id="hireHours" type="number" step="1"></div>
+        </div>
+      </section>
+      <section class="card">
+        <h3>Cómo se calcula la capacidad</h3>
+        <div class="noteBox">
+          <p><strong>Horas disponibles</strong> = suma de las horas a clientes de todo el equipo.</p>
+          <p><strong>Horas demandadas</strong> = suma de (clientes × horas que consume cada cliente).</p>
+          <p><strong>Utilización</strong> = horas demandadas ÷ horas disponibles. Por encima del 85% se está cerca del límite; por encima del 100% la estructura no alcanza.</p>
+          <p><strong>Clientes máximos</strong> = horas disponibles ÷ horas promedio por cliente.</p>
+          <p>La regla del informe: se contrata cuando la contribución de los clientes nuevos cubre el costo de la persona adicional <strong>y deja margen</strong>, no solo porque haya más clientes.</p>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <section id="tab-clientes" class="tabpane">
+    <section class="card" style="margin-bottom:10px">
+      <h3>Economía de cada tipo de cliente (por cliente, por mes)</h3>
+      <table id="segTable"></table>
+      <p class="hint"><strong>Contribución</strong> = lo que deja cada cliente después del costo directo. <strong>Contribución por hora</strong> = contribución ÷ horas que consume el cliente: permite comparar qué tipo de cliente rinde más por el tiempo invertido.</p>
+    </section>
+    <div class="g2">
+      <section class="card">
+        <h3>De dónde sale el costo de contenido</h3>
+        <div class="noteBox" id="contentBox"></div>
+      </section>
+      <section class="card">
+        <h3>Cómo interpretar esta tabla</h3>
+        <div class="noteBox">
+          <p>Un cliente es sano cuando su contribución cubre su parte de la estructura y deja utilidad. Si la contribución por hora es muy baja, ese tipo de cliente consume mucho tiempo para lo que deja.</p>
+          <p>El punto de equilibrio por tipo indica cuántos clientes de ese tipo se necesitarían, solos, para cubrir los gastos fijos de Nodus.</p>
+          <p>Comparar tipos de cliente ayuda a decidir en qué cartera conviene enfocar las ventas.</p>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <section id="tab-avanzado" class="tabpane">
+    <div id="advKpis" class="cards4"></div>
+    <div class="g2">
+      <section class="card">
+        <h3>Supuestos de adquisición y caja</h3>
+        <div class="row3">
+          <div><label>Clientes nuevos por mes</label><input id="advNew" type="number" min="0" step="1"></div>
+          <div><label>Gasto de adquisición COP/mes</label><input id="advSpend" type="number" min="0" step="50000"></div>
+          <div><label>Churn mensual (%)</label><input id="advChurn" type="number" min="0" max="100" step="1"></div>
+        </div>
+        <div class="row3" style="margin-top:2px">
+          <div><label>Días que tardan en pagar</label><input id="advCollect" type="number" min="0" step="5"></div>
+          <div><label>Días que Nodus tarda en pagar</label><input id="advPay" type="number" min="0" step="5"></div>
+          <div><label>Caja disponible hoy (COP)</label><input id="advCash" type="number" min="0" step="1000000"></div>
+        </div>
+        <p class="hint">El gasto de adquisición suele ser el marketing y las horas comerciales. El churn es el % de clientes que se pierde cada mes. La caja es el dinero disponible para operar.</p>
+      </section>
+      <section class="card">
+        <h3>Qué significan estos indicadores</h3>
+        <div class="noteBox">
+          <p><strong>CAC</strong>: cuánto cuesta conseguir un cliente nuevo (gasto de adquisición ÷ clientes nuevos).</p>
+          <p><strong>LTV</strong>: contribución que deja un cliente durante toda su relación con Nodus. Con churn del 5% mensual, la vida media es de 20 meses.</p>
+          <p><strong>LTV / CAC</strong>: si es 3× o más, la adquisición es sana; si es bajo, conseguir clientes cuesta demasiado para lo que dejan.</p>
+          <p><strong>Payback</strong>: meses que tarda un cliente en devolver lo que costó conseguirlo.</p>
+          <p><strong>Cartera por cobrar</strong>: dinero facturado que aún no ha entrado (ingresos × días de cobro ÷ 30).</p>
+          <p><strong>Caja mínima sugerida</strong>: colchón de 3 meses de gastos fijos + cartera por cobrar, para resistir meses flojos y pagos tardíos.</p>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <section id="tab-guia" class="tabpane">
+    <div class="g2">
+      <section class="card">
+        <h3>Cómo usar el simulador</h3>
+        <ul class="tight">
+          <li><strong>1.</strong> Ajusta los supuestos en el panel izquierdo: TRM, impuesto, meta, clientes, equipo, tecnología y gastos.</li>
+          <li><strong>2.</strong> Usa los <strong>escenarios rápidos</strong> de la barra superior: los de <strong>Equipo</strong> cambian solo el costo de los socios; los de <strong>Cartera</strong> cambian solo cuántos clientes hay de cada tipo. Se pueden combinar entre sí.</li>
+          <li><strong>3.</strong> Todo se recalcula solo: mira los 8 indicadores de arriba y la "Lectura rápida" del Resumen.</li>
+          <li><strong>4.</strong> En <strong>Escenarios</strong> prueba más o menos clientes, otra composición de cartera y cambios de TRM.</li>
+          <li><strong>5.</strong> En <strong>Capacidad</strong> mira cuántos clientes aguanta el equipo antes de contratar.</li>
+          <li><strong>6.</strong> En <strong>Economía por cliente</strong> compara cuánto deja cada tipo de cliente por hora invertida.</li>
+          <li><strong>7.</strong> Guarda tu escenario o expórtalo para compartirlo con los socios.</li>
+        </ul>
+      </section>
+      <section class="card">
+        <h3>Qué significa cada margen</h3>
+        <table class="tleft">
+          <tr><th>Indicador</th><th class="left">Qué responde</th></tr>
+          <tr><td>Margen bruto</td><td class="left">¿Cuánto queda de cada peso vendido después de entregar el servicio?</td></tr>
+          <tr><td>Margen operativo</td><td class="left">¿Cuánto queda después de mantener Nodus funcionando?</td></tr>
+          <tr><td>Margen neto</td><td class="left">¿Cuánto queda después del impuesto modelado?</td></tr>
+          <tr><td>Contribución por cliente</td><td class="left">¿Cuánto aporta cada cliente para cubrir la estructura?</td></tr>
+        </table>
+      </section>
+    </div>
+    <div class="g2">
+      <section class="card">
+        <h3>De dónde sale cada número</h3>
+        <ul class="tight">
+          <li><strong>Ingresos</strong> = suma de (clientes × ticket). Si el ticket está en USD, se multiplica por la TRM.</li>
+          <li><strong>Costos directos</strong> = suma de clientes × (costo editor − aporte del cliente) × TRM. Nodus solo asume su parte del editor.</li>
+          <li><strong>Margen bruto</strong> = ingresos − costos directos.</li>
+          <li><strong>Gastos operativos</strong> = nómina + tecnología + otros gastos + reserva (% de ingresos).</li>
+          <li><strong>Resultado operativo</strong> = margen bruto − gastos operativos.</li>
+          <li><strong>Utilidad neta</strong> = resultado operativo − impuesto modelado.</li>
+          <li><strong>Punto de equilibrio</strong> = gastos fijos ÷ contribución promedio por cliente.</li>
+        </ul>
+      </section>
+      <section class="card">
+        <h3>Salario, utilidad y reinversión</h3>
+        <p>El salario de los socios es un <strong>costo operativo</strong>: se paga por trabajar en Nodus. La <strong>utilidad</strong> es lo que queda después de cubrir todos los costos, gastos e impuestos.</p>
+        <p>La utilidad puede reinvertirse (contratación, marketing, software), guardarse como reserva o distribuirse. En etapas iniciales suele tener sentido reinvertir buena parte.</p>
+        <p><strong>Regla de contratación:</strong> no se contrata solo porque hay más clientes; se contrata cuando la contribución de los clientes adicionales cubre el costo de la nueva persona y deja margen.</p>
+      </section>
+    </div>
+    <section class="card" style="margin-top:10px">
+      <h3>Importante</h3>
+      <div class="noteBox">
+        <p>Este simulador es una herramienta de planeación. El impuesto, la TRM y los costos laborales son supuestos editables y no reemplazan una liquidación tributaria ni contable real: valídalos con un contador.</p>
+        <p>Si el cliente paga directamente una herramienta (CRM, dominio, hosting, pauta, WhatsApp API, créditos de IA), no debe registrarse como costo de Nodus: solo entra la parte que Nodus asume.</p>
+        <p>Nodus no vende horas: las horas sirven internamente para medir capacidad, carga, necesidad de contratación y rentabilidad por cliente.</p>
+        <p>Todavía no se modelan: IVA, retenciones, prestaciones calculadas automáticamente, proyección a 36 meses ni flujo de caja detallado mes a mes.</p>
+      </div>
+    </section>
+  </section>
+</main>
+</div>
+
+<div class="footer">Modelo de planeación financiera de Nodus. No sustituye asesoría contable, tributaria o financiera. Todos los valores iniciales son supuestos editables.</div>
+</div>
+
+<script>
+const initial={
+  fx:3200,tax:0,reserve:0,target:8,
+  clients:[
+    {name:"Colombia · $4M",qty:8,ticket:4000000,currency:"COP",editorCost:400,clientPays:200,hours:35},
+    {name:"Internacional · USD 2.000",qty:0,ticket:2000,currency:"USD",editorCost:400,clientPays:200,hours:35}
+  ],
+  staff:[
+    {name:"Socio 1",cost:3000000,hours:160,clientHours:78},
+    {name:"Socio 2",cost:3000000,hours:160,clientHours:78},
+    {name:"Socio 3",cost:3000000,hours:160,clientHours:78},
+    {name:"Socio 4",cost:3000000,hours:160,clientHours:78},
+    {name:"Asistente",cost:3000000,hours:160,clientHours:0}
+  ],
+  tech:[
+    {name:"Google Workspace",cost:90000},{name:"Claude",cost:64000},{name:"Google AI",cost:64000},
+    {name:"Hostinger VPS / n8n",cost:51000},{name:"Vercel",cost:64000},{name:"Dominio",cost:5000}
+  ],
+  ops:[{name:"Marketing Nodus",cost:700000},{name:"Legal / contabilidad / otros",cost:500000}],
+  hire:{cost:3000000,clientHours:78},
+  adv:{newClients:2,acqSpend:700000,churn:5,collectDays:30,payDays:30,cash:0}
+};
+const KEY="nodusModelV2";
+const clone=o=>JSON.parse(JSON.stringify(o));
+const $=id=>document.getElementById(id);
+const nf0=new Intl.NumberFormat("es-CO",{maximumFractionDigits:0});
+const money=n=>"$ "+nf0.format(Math.round(n||0));
+const moneyM=n=>{const v=n||0,a=Math.abs(v);const t=a>=1e6?(v/1e6).toFixed(1).replace(".",",")+"M":a>=1e3?(v/1e3).toFixed(0)+"k":nf0.format(v);return "$ "+t};
+const usd=n=>"US$ "+nf0.format(Math.round(n||0));
+const num=n=>nf0.format(Math.round(n||0));
+const dec=(n,d)=>Number(n||0).toFixed(d===undefined?1:d).replace(".",",");
+const pct=n=>dec(n,1)+"%";
+const esc=x=>String(x===undefined||x===null?"":x).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const COLORS=["#63a7ff","#35d39a","#ffca6b","#c58cff","#ff6f7d","#67d6d0","#f0a05a"];
+
+const IDMAP={
+  fx:["fx"],tax:["tax"],reserve:["reserve"],target:["target"],
+  hireCost:["hire","cost"],hireHours:["hire","clientHours"],
+  advNew:["adv","newClients"],advSpend:["adv","acqSpend"],advChurn:["adv","churn"],
+  advCollect:["adv","collectDays"],advPay:["adv","payDays"],advCash:["adv","cash"]
+};
+function setById(id,val){const p=IDMAP[id];if(!p)return;if(p.length===1)s[p[0]]=val;else s[p[0]][p[1]]=val;}
+
+function normalize(o){
+  const base=clone(initial);
+  const out=Object.assign(base,o||{});
+  out.clients=(Array.isArray(out.clients)&&out.clients.length?out.clients:base.clients).map(c=>({
+    name:c.name||"Segmento",qty:Math.max(0,+c.qty||0),ticket:Math.max(0,+c.ticket||0),
+    currency:c.currency==="USD"?"USD":"COP",
+    editorCost:c.editorCost!==undefined?Math.max(0,+c.editorCost||0):400,
+    clientPays:c.clientPays!==undefined?Math.max(0,+c.clientPays||0):200,
+    hours:Math.max(0,c.hours!==undefined?+c.hours:35)
+  }));
+  out.staff=(Array.isArray(out.staff)?out.staff:base.staff).map(x=>({
+    name:x.name||"Persona",cost:Math.max(0,+x.cost||0),
+    hours:Math.max(0,x.hours!==undefined?+x.hours:160),
+    clientHours:Math.max(0,x.clientHours!==undefined?+x.clientHours:0)
+  }));
+  out.tech=(Array.isArray(out.tech)?out.tech:base.tech).map(x=>({name:x.name||"Herramienta",cost:Math.max(0,+x.cost||0)}));
+  out.ops=(Array.isArray(out.ops)?out.ops:base.ops).map(x=>({name:x.name||"Gasto",cost:Math.max(0,+x.cost||0)}));
+  out.hire=Object.assign(clone(initial.hire),o&&o.hire?o.hire:{});
+  out.adv=Object.assign(clone(initial.adv),o&&o.adv?o.adv:{});
+  ["fx","tax","reserve","target"].forEach(k=>{out[k]=Math.max(0,+out[k]||0)});
+  return out;
+}
+function loadSaved(){
+  try{
+    const raw=localStorage.getItem(KEY);
+    if(!raw)return clone(initial);
+    return normalize(JSON.parse(raw));
+  }catch(e){return clone(initial)}
+}
+let s=loadSaved();
+
+const CLIENT_FIELDS=[
+  {key:"qty",label:"Cantidad de clientes",type:"number",step:1},
+  {key:"ticket",label:"Ticket por cliente",type:"number",step:100000},
+  {key:"currency",label:"Moneda",type:"select",options:["COP","USD"]},
+  {key:"editorCost",label:"Costo editor USD/mes",type:"number",step:50},
+  {key:"clientPays",label:"Aporta el cliente USD/mes",type:"number",step:50},
+  {key:"hours",label:"Horas que consume/mes",type:"number",step:1}
+];
+const STAFF_FIELDS=[
+  {key:"cost",label:"Costo empresa COP/mes",type:"number",step:100000},
+  {key:"hours",label:"Horas al mes",type:"number",step:1},
+  {key:"clientHours",label:"Horas a clientes",type:"number",step:1}
+];
+const SIMPLE_FIELDS=[{key:"cost",label:"Costo mensual COP",type:"number",step:1000}];
+
+function fieldHTML(key,i,f,x){
+  if(f.type==="select"){
+    return `<div><label>${f.label}</label><select data-key="${key}" data-i="${i}" data-field="${f.key}">${f.options.map(o=>`<option value="${o}" ${String(x[f.key])===o?"selected":""}>${o}</option>`).join("")}</select></div>`;
+  }
+  return `<div><label>${f.label}</label><input type="${f.type||"text"}" step="${f.step||1}" value="${esc(x[f.key])}" data-key="${key}" data-i="${i}" data-field="${f.key}"></div>`;
+}
+function renderList(key,elId,fields){
+  $(elId).innerHTML=s[key].map((x,i)=>`<div class="item"><div class="itemhead"><input value="${esc(x.name)}" data-key="${key}" data-i="${i}" data-field="name" title="Nombre"><button class="danger" data-remove="${key}" data-i="${i}" title="Eliminar">✕</button></div><div class="itemgrid">${fields.map(f=>fieldHTML(key,i,f,x)).join("")}</div></div>`).join("");
+}
+
+function compute(fxOverride){
+  const fx=fxOverride!==undefined?fxOverride:(+s.fx||0);
+  const taxR=Math.min(1,Math.max(0,(+s.tax||0)/100));
+  const resR=Math.min(1,Math.max(0,(+s.reserve||0)/100));
+  const segs=s.clients.map(c=>{
+    const qty=Math.max(0,+c.qty||0),hours=Math.max(0,+c.hours||0),ticket=Math.max(0,+c.ticket||0);
+    const editorCost=Math.max(0,+c.editorCost||0),clientPays=Math.max(0,+c.clientPays||0);
+    const revPer=c.currency==="USD"?ticket*fx:ticket;
+    const subsidyUSD=Math.max(0,editorCost-clientPays);
+    const directPer=subsidyUSD*fx;
+    const contribPer=revPer-directPer;
+    const rev=revPer*qty,direct=directPer*qty,contrib=contribPer*qty;
+    return {name:c.name||"Segmento",currency:c.currency==="USD"?"USD":"COP",qty,ticket,hours,editorCost,clientPays,
+      subsidyUSD,revPer,directPer,contribPer,rev,direct,contrib,hoursTotal:hours*qty,
+      margin:revPer>0?contribPer/revPer*100:0};
+  });
+  const sum=(arr,k)=>arr.reduce((a,x)=>a+(+x[k]||0),0);
+  const revenue=sum(segs,"rev"),direct=sum(segs,"direct"),gross=revenue-direct;
+  const clients=segs.reduce((a,x)=>a+x.qty,0);
+  const payroll=sum(s.staff,"cost"),tech=sum(s.tech,"cost"),ops=sum(s.ops,"cost");
+  const opexFixed=payroll+tech+ops;
+  const reserve=revenue*resR;
+  const oper=gross-opexFixed-reserve;
+  const tax=Math.max(0,oper)*taxR;
+  const net=oper-tax;
+  const gm=revenue?gross/revenue*100:0,om=revenue?oper/revenue*100:0,nm=revenue?net/revenue*100:0;
+  const contribAvg=clients?gross/clients:0;
+  const ticketAvg=clients?revenue/clients:0;
+  const directAvg=clients?direct/clients:0;
+  const hoursDemand=sum(segs,"hoursTotal");
+  const hoursAvail=sum(s.staff,"clientHours");
+  const util=hoursAvail?hoursDemand/hoursAvail*100:0;
+  const hoursAvgPerClient=clients?hoursDemand/clients:0;
+  const maxClients=hoursAvgPerClient>0?Math.floor(hoursAvail/hoursAvgPerClient):0;
+  const beTotal=contribAvg>0?Math.ceil(opexFixed/contribAvg):null;
+  const target=+s.target||0;
+  let netAtTarget=null;
+  if(target>0&&clients>0&&contribAvg>0){
+    const g=contribAvg*target,rev=ticketAvg*target;
+    const op=g-opexFixed-rev*resR;
+    netAtTarget=op-Math.max(0,op)*taxR;
+  }
+  return {segs,revenue,direct,gross,clients,payroll,tech,ops,opexFixed,reserve,oper,tax,net,gm,om,nm,
+    contribAvg,ticketAvg,directAvg,hoursDemand,hoursAvail,util,hoursAvgPerClient,maxClients,beTotal,target,netAtTarget,
+    taxR,resR,fx,staffCount:s.staff.length};
+}
+
+function kpi(label,value,sub,cls){
+  return `<div class="kpi"><div class="label">${label}</div><div class="value ${cls||""}">${value}</div><div class="sub">${sub||""}</div></div>`;
+}
+function mini(label,value,sub,cls){
+  return `<div class="mini"><div class="label">${label}</div><div class="value ${cls||""}">${value}</div><div class="sub">${sub||""}</div></div>`;
+}
+function updateSums(m){
+  $("sumGeneral").textContent="TRM "+money(m.fx);
+  $("sumClients").textContent=m.clients+" · "+moneyM(m.revenue)+"/mes";
+  $("sumStaff").textContent=moneyM(m.payroll)+"/mes";
+  $("sumTech").textContent=moneyM(m.tech)+"/mes";
+  $("sumOps").textContent=moneyM(m.ops)+"/mes";
+}
+function renderKPIs(m){
+  const metaSub=m.target?(m.clients>=m.target?"Meta alcanzada":"Faltan "+(m.target-m.clients)):"Sin meta definida";
+  const beSub=m.beTotal?(m.clients>=m.beTotal?"Cubierto":"Aún no se cubre"):"Sin contribución positiva";
+  const capSub=m.util>100?"Sobrecarga: contratar":m.util>85?"Cerca del límite":"Con margen";
+  $("kpis").innerHTML=[
+    kpi("Ingresos / mes",money(m.revenue),m.clients+" cliente"+(m.clients===1?"":"s")+" activo"+(m.clients===1?"":"s")),
+    kpi("Margen bruto",pct(m.gm),moneyM(m.gross)+" brutos"),
+    kpi("Resultado operativo",money(m.oper),pct(m.om)+" del ingreso",m.oper>=0?"good":"bad"),
+    kpi("Utilidad neta",money(m.net),pct(m.nm)+" del ingreso",m.net>=0?"good":"bad"),
+    kpi("Clientes",m.clients+(m.target?" / "+m.target:""),metaSub),
+    kpi("Punto de equilibrio",m.beTotal?m.beTotal+" clientes":"—",beSub),
+    kpi("Capacidad usada",pct(m.util),capSub,m.util>100?"bad":m.util>85?"warn":""),
+    kpi("Contribución / cliente",money(m.contribAvg),"Ingreso − costo directo")
+  ].join("");
+}
+function renderQuick(m){
+  if(m.clients===0){
+    $("quickRead").innerHTML="Aún no hay clientes en la cartera. Cambia la <strong>Cantidad</strong> de un segmento en el panel izquierdo (o agrega uno) y el modelo calculará ingresos, márgenes y utilidad.";
+    return;
+  }
+  const p=[];
+  p.push(`Con <strong>${m.clients} cliente${m.clients===1?"":"s"}</strong>, Nodus factura <strong>${money(m.revenue)}</strong> al mes.`);
+  p.push(`Después de los costos directos de contenido quedan <strong>${money(m.gross)}</strong> (margen bruto ${pct(m.gm)}).`);
+  if(m.oper>=0)p.push(`Al cubrir la estructura (equipo, tecnología y gastos) el resultado operativo es <strong>${money(m.oper)}</strong> (${pct(m.om)} del ingreso).`);
+  else p.push(`La estructura <strong>no queda cubierta</strong>: el resultado operativo es <strong>${money(m.oper)}</strong> (${pct(m.om)}). Faltan clientes o hay que ajustar precios o costos.`);
+  if(m.taxR>0)p.push(`Tras el impuesto modelado (${pct(m.taxR*100)}), la utilidad neta es <strong>${money(m.net)}</strong> (${pct(m.nm)}).`);
+  if(m.beTotal)p.push(m.clients>=m.beTotal?`El punto de equilibrio es de <strong>${m.beTotal} clientes</strong> y ya está superado.`:`El punto de equilibrio está en <strong>${m.beTotal} clientes</strong>: faltan ${m.beTotal-m.clients}.`);
+  if(m.target)p.push(m.clients>=m.target?`Ya alcanzaste la meta de ${m.target} clientes.`:`Estás a <strong>${m.target-m.clients}</strong> cliente(s) de la meta de ${m.target}.`);
+  if(m.hoursAvail){
+    if(m.util>100)p.push(`La carga operativa usa el <strong>${pct(m.util)}</strong> de las horas disponibles: se necesita contratar.`);
+    else if(m.util>85)p.push(`La carga operativa usa el <strong>${pct(m.util)}</strong> de las horas: está cerca del límite, el próximo cliente probablemente exija contratar.`);
+    else p.push(`La carga operativa usa el <strong>${pct(m.util)}</strong> de las horas; aún hay espacio para ~${Math.max(0,m.maxClients-m.clients)} cliente(s) antes de contratar.`);
+  }
+  $("quickRead").innerHTML=p.join(" ");
+}
+function renderPnl(m){
+  const p=v=>m.revenue?v/m.revenue*100:0;
+  const row=(n,v,cls)=>`<tr class="${cls||""}"><td>${n}</td><td>${money(v)}</td><td>${pct(p(v))}</td></tr>`;
+  $("pnl").innerHTML=`<tr><th>Concepto</th><th>COP / mes</th><th>% ingreso</th></tr>`+
+    row("Ingresos",m.revenue)+
+    row("(−) Costos directos · contenido",-m.direct)+
+    row("= Margen bruto",m.gross,"total")+
+    row("(−) Nómina / equipo",-m.payroll)+
+    row("(−) Tecnología",-m.tech)+
+    row("(−) Otros gastos operativos",-m.ops)+
+    row("(−) Reserva / contingencia",-m.reserve)+
+    row("= Resultado operativo",m.oper,"total")+
+    row("(−) Impuesto modelado ("+pct(m.taxR*100)+")",-m.tax)+
+    row("= Utilidad neta",m.net,"total");
+}
+function renderRatios(m){
+  const p=v=>m.revenue?v/m.revenue*100:0;
+  const r=(n,v,how)=>`<tr><td>${n}</td><td>${v}</td><td class="left hint" style="margin:0">${how}</td></tr>`;
+  const cph=m.hoursDemand>0?m.gross/m.hoursDemand:0;
+  $("ratios").innerHTML=`<tr><th>Indicador</th><th>Valor</th><th class="left">Cómo se calcula</th></tr>`+
+    r("Costos directos / ingresos",pct(p(m.direct)),"Costos directos ÷ ingresos")+
+    r("Nómina / ingresos",pct(p(m.payroll)),"Nómina ÷ ingresos")+
+    r("Tecnología / ingresos",pct(p(m.tech)),"Tecnología ÷ ingresos")+
+    r("Gastos operativos / ingresos",pct(p(m.opexFixed+m.reserve)),"(Nómina + tecnología + otros + reserva) ÷ ingresos")+
+    r("Margen bruto",pct(m.gm),"(Ingresos − costos directos) ÷ ingresos")+
+    r("Margen operativo",pct(m.om),"(Margen bruto − gastos operativos) ÷ ingresos")+
+    r("Margen neto",pct(m.nm),"(Resultado operativo − impuesto) ÷ ingresos")+
+    r("Ingreso promedio por cliente",money(m.ticketAvg),"Ingresos ÷ clientes")+
+    r("Costo directo por cliente",money(m.directAvg),"Costos directos ÷ clientes")+
+    r("Contribución por cliente",money(m.contribAvg),"(Ingresos − costos directos) ÷ clientes")+
+    r("Contribución por hora",money(cph),"Margen bruto ÷ horas demandadas")+
+    r("Horas por cliente (promedio)",num(m.hoursAvgPerClient)+" h","Horas demandadas ÷ clientes")+
+    r("Clientes por persona",m.staffCount?dec(m.clients/m.staffCount,1):"—","Clientes ÷ personas del equipo");
+}
+function renderSegTable(m){
+  if(!m.segs.length){$("segTable").innerHTML='<tr><td class="hint">Agrega al menos un segmento de clientes en el panel izquierdo.</td></tr>';return;}
+  const rows=m.segs.map(x=>{
+    const be=x.contribPer>0?Math.ceil(m.opexFixed/x.contribPer):null;
+    const cph=x.hours>0?x.contribPer/x.hours:0;
+    return `<tr><td>${esc(x.name)}</td><td>${num(x.qty)}</td><td>${x.currency==="USD"?usd(x.ticket):money(x.ticket)}</td><td>${money(x.rev)}</td><td>${money(x.direct)}</td><td class="${x.contribPer>=0?"pos":"neg"}">${money(x.contrib)}</td><td>${pct(x.margin)}</td><td>${money(cph)}</td><td>${be?be+" clientes":"—"}</td></tr>`;
+  }).join("");
+  const cphT=m.hoursDemand>0?m.gross/m.hoursDemand:0;
+  $("segTable").innerHTML=`<tr><th>Segmento</th><th>Clientes</th><th>Ticket</th><th>Ingreso / mes</th><th>Costo directo / mes</th><th>Contribución / mes</th><th>Margen</th><th>Contrib. / hora</th><th>Pto. equilibrio</th></tr>`+
+    rows+
+    `<tr class="total"><td>Total cartera</td><td>${num(m.clients)}</td><td>${money(m.ticketAvg)}</td><td>${money(m.revenue)}</td><td>${money(m.direct)}</td><td>${money(m.gross)}</td><td>${pct(m.gm)}</td><td>${money(cphT)}</td><td>${m.beTotal?m.beTotal+" clientes":"—"}</td></tr>`;
+}
+function renderScenarios(m){
+  const counts=[2,4,6,8,10,12,14,16];
+  if(m.clients>0&&counts.indexOf(m.clients)===-1)counts.push(m.clients);
+  counts.sort((a,b)=>a-b);
+  const netFor=(n,contribPer,revPer)=>{
+    const gross=contribPer*n,rev=revPer*n;
+    const oper=gross-m.opexFixed-rev*m.resR;
+    return oper-Math.max(0,oper)*m.taxR;
+  };
+  let head="<tr><th>Clientes</th>";
+  m.segs.forEach(x=>head+=`<th>${esc(x.name)}</th>`);
+  head+="<th>Mix actual</th></tr>";
+  const rows=counts.map(n=>{
+    const hl=(n===m.clients)?"hl":"";
+    const cells=m.segs.map(x=>{const v=netFor(n,x.contribPer,x.revPer);return `<td class="${v>=0?"pos":"neg"}">${moneyM(v)}</td>`}).join("");
+    let mix="<td>—</td>";
+    if(m.clients>0){const v=netFor(n,m.contribAvg,m.ticketAvg);mix=`<td class="${v>=0?"pos":"neg"}">${moneyM(v)}</td>`;}
+    return `<tr class="${hl}"><td>${n}</td>${cells}${mix}</tr>`;
+  }).join("");
+  $("sens").innerHTML=head+rows;
+
+  const usdRevenue=m.segs.some(x=>x.currency==="USD"&&x.qty>0);
+  const usdCost=m.segs.some(x=>x.subsidyUSD>0&&x.qty>0);
+  const base=m.net;
+  const rowsT=[0.8,0.9,1,1.1,1.2].map(k=>{
+    const t=Math.round(m.fx*k/10)*10;
+    const mm=compute(t);
+    const d=mm.net-base;
+    return `<tr class="${k===1?"hl":""}"><td>${money(t)}</td><td>${money(mm.revenue)}</td><td class="${mm.net>=0?"pos":"neg"}">${money(mm.net)}</td><td class="${d>=0?"pos":"neg"}">${(d>=0?"+":"")+moneyM(d)}</td></tr>`;
+  }).join("");
+  let trmNote="";
+  if(!usdRevenue&&!usdCost)trmNote=`<tr><td colspan="4" class="hint">Ni los ingresos ni el costo de contenido dependen del dólar: la TRM no cambia el resultado.</td></tr>`;
+  else if(!usdRevenue)trmNote=`<tr><td colspan="4" class="hint">Hoy no hay ingresos en USD, pero el costo de contenido sí está en USD: si la TRM sube, el subsidio de Nodus cuesta más y la utilidad baja.</td></tr>`;
+  $("trmTable").innerHTML=`<tr><th>TRM</th><th>Ingresos</th><th>Utilidad neta</th><th>Δ vs hoy</th></tr>`+rowsT+trmNote;
+}
+function renderCapacity(m){
+  const room=m.maxClients-m.clients;
+  const extra=(m.hoursDemand>m.hoursAvail&&+s.hire.clientHours>0)?Math.ceil((m.hoursDemand-m.hoursAvail)/(+s.hire.clientHours)):0;
+  $("capKpis").innerHTML=[
+    mini("Horas disponibles",num(m.hoursAvail)+" h","Horas del equipo para clientes"),
+    mini("Horas demandadas",num(m.hoursDemand)+" h",num(m.hoursAvgPerClient)+" h por cliente"),
+    mini("Utilización",pct(m.util),m.util>100?"Sobrecarga":m.util>85?"Cerca del límite":"Con margen",m.util>100?"bad":m.util>85?"warn":""),
+    mini("Clientes máximos",num(m.maxClients),extra?`Necesitas ${extra} persona(s) más`:(room>0?`Aún caben ~${room}`:"En el límite: el próximo exige contratar"))
+  ].join("");
+  const totalCH=m.hoursAvail||1;
+  $("hoursTable").innerHTML=`<tr><th>Persona</th><th>Costo empresa</th><th>Horas / mes</th><th>Horas a clientes</th><th>% horas cliente</th></tr>`+
+    s.staff.map(x=>`<tr><td>${esc(x.name)}</td><td>${money(+x.cost||0)}</td><td>${num(+x.hours||0)}</td><td>${num(+x.clientHours||0)}</td><td>${pct((+x.clientHours||0)/totalCH*100)}</td></tr>`).join("")+
+    `<tr class="total"><td>Total</td><td>${money(m.payroll)}</td><td>${num(s.staff.reduce((a,x)=>a+(+x.hours||0),0))}</td><td>${num(m.hoursAvail)}</td><td>100,0%</td></tr>`;
+  const hc=+s.hire.cost||0,hh=+s.hire.clientHours||0;
+  let txt;
+  if(!m.hoursAvgPerClient||m.clients===0){txt="Agrega clientes y define sus horas de consumo para calcular la regla de contratación.";}
+  else{
+    const cpp=hh/m.hoursAvgPerClient,extraContrib=cpp*m.contribAvg,diff=extraContrib-hc;
+    txt=`Hoy cada cliente consume <strong>${num(m.hoursAvgPerClient)} h/mes</strong> y deja <strong>${money(m.contribAvg)}</strong> de contribución. Una persona nueva con <strong>${num(hh)} h a clientes</strong> permitiría atender ~<strong>${dec(cpp,1)} clientes</strong>, generando ~<strong>${money(extraContrib)}</strong> de contribución frente a un costo de <strong>${money(hc)}</strong>: ${diff>=0?`sobrarían <strong class="good">${money(diff)}</strong> al mes, así que contratar tiene sentido económico.`:`faltarían <strong class="bad">${money(Math.abs(diff))}</strong> al mes, así que conviene esperar o renegociar antes de contratar.`}`;
+  }
+  $("hireBox").innerHTML=txt;
+}
+function renderAdvanced(m){
+  const a=s.adv;
+  const nc=+a.newClients||0,spend=+a.acqSpend||0,churn=+a.churn||0;
+  const cac=nc>0?spend/nc:null;
+  const life=churn>0?100/churn:null;
+  const ltv=(life&&m.contribAvg)?m.contribAvg*life:null;
+  const ratio=(cac&&ltv)?ltv/cac:null;
+  const payback=(cac&&m.contribAvg>0)?cac/m.contribAvg:null;
+  const cartera=m.revenue*(+a.collectDays||0)/30;
+  const colchon=3*m.opexFixed;
+  const cajaMin=colchon+cartera;
+  const cash=+a.cash||0;
+  $("advKpis").innerHTML=[
+    mini("CAC",cac?money(cac):"—","Costo por cliente nuevo"),
+    mini("Vida media del cliente",life?dec(life,1)+" meses":"—","Con churn de "+pct(churn)+" mensual"),
+    mini("LTV (contribución)",ltv?money(ltv):"—","Lo que deja un cliente en su vida"),
+    mini("LTV / CAC",ratio?dec(ratio,1)+"×":"—",ratio?(ratio>=3?"Sano (≥ 3×)":"Revisar adquisición"):"Define clientes nuevos",ratio?(ratio>=3?"good":"warn"):""),
+    mini("Payback",payback?dec(payback,1)+" meses":"—","Tiempo para recuperar el CAC"),
+    mini("Cartera por cobrar",money(cartera),num(+a.collectDays||0)+" días de cobro"),
+    mini("Colchón de 3 meses",money(colchon),"Reserva recomendada de gastos fijos"),
+    mini("Caja mínima sugerida",money(cajaMin),cash>=cajaMin?"Cubierta con la caja actual":"Faltan "+money(cajaMin-cash),cash>=cajaMin?"good":"bad")
+  ].join("");
+}
+function renderContentBox(m){
+  if(!m.segs.length){$("contentBox").innerHTML="Agrega un segmento de clientes para ver el detalle.";return;}
+  $("contentBox").innerHTML=m.segs.map(x=>
+    `<p><strong>${esc(x.name)}</strong>: el editor cuesta USD ${num(x.editorCost)}/mes; el cliente aporta USD ${num(x.clientPays)}. Nodus asume <strong>USD ${num(x.subsidyUSD)} por cliente/mes = ${money(x.subsidyUSD*m.fx)}</strong> (TRM ${money(m.fx)}).</p>`
+  ).join("")+`<p class="hint">El costo completo del editor no se carga a Nodus: solo la parte que subsidia. Si el cliente cubre todo el editor, el costo directo es cero.</p>`;
+}
+
+function ctx2d(id){
+  const c=$(id);if(!c)return null;
+  const r=c.getBoundingClientRect();
+  if(r.width<30||r.height<30)return null;
+  const dpr=(typeof devicePixelRatio!=="undefined"?devicePixelRatio:1)||1;
+  c.width=Math.round(r.width*dpr);c.height=Math.round(r.height*dpr);
+  const x=c.getContext("2d");
+  x.setTransform(dpr,0,0,dpr,0,0);
+  x.clearRect(0,0,r.width,r.height);
+  return {x,w:r.width,h:r.height};
+}
+function msg(x,w,h,text){
+  x.fillStyle="#91a4ba";x.font="11.5px system-ui";x.textAlign="center";
+  x.fillText(text,w/2,h/2);
+}
+function wrapLabel(text,max){
+  const words=String(text).split(" "),lines=[];
+  let cur="";
+  words.forEach(w=>{
+    if((cur+" "+w).trim().length<=max)cur=(cur+" "+w).trim();
+    else{if(cur)lines.push(cur);cur=w;}
+  });
+  if(cur)lines.push(cur);
+  return lines.slice(0,2).map(l=>l.length>max?l.slice(0,max-1)+"…":l);
+}
+function donut(id,items,title,totalLabel){
+  const g=ctx2d(id);if(!g)return;
+  const x=g.x,w=g.w,h=g.h;
+  const data=items.filter(d=>d.v>0);
+  if(!data.length){msg(x,w,h,"Sin datos para mostrar");return;}
+  const total=data.reduce((a,d)=>a+d.v,0);
+  const cx=Math.min(100,w*0.26),cy=h/2,R=Math.min(h/2-14,68),IR=R*0.58;
+  let ang=-Math.PI/2;
+  data.forEach((d,i)=>{
+    const a=d.v/total*Math.PI*2;
+    x.beginPath();x.moveTo(cx,cy);x.arc(cx,cy,R,ang,ang+a);x.closePath();
+    x.fillStyle=COLORS[i%COLORS.length];x.fill();ang+=a;
+  });
+  x.fillStyle="#0d1a2b";x.beginPath();x.arc(cx,cy,IR,0,Math.PI*2);x.fill();
+  x.textAlign="center";x.fillStyle="#edf5ff";x.font="700 12px system-ui";x.fillText(title,cx,cy-4);
+  x.fillStyle="#91a4ba";x.font="10px system-ui";x.fillText(totalLabel,cx,cy+11);
+  const lx=cx+R+16;
+  let ly=Math.max(16,cy-data.length*7.5);
+  x.textAlign="left";
+  data.slice(0,7).forEach((d,i)=>{
+    x.fillStyle=COLORS[i%COLORS.length];x.fillRect(lx,ly-8,8,8);
+    x.fillStyle="#c7d5e6";x.font="10.5px system-ui";
+    const label=d.n.length>24?d.n.slice(0,23)+"…":d.n;
+    x.fillText(label+"  "+moneyM(d.v)+" · "+pct(d.v/total*100),lx+13,ly);
+    ly+=15;
+  });
+}
+function breakChart(m){
+  const g=ctx2d("breakChart");if(!g)return;
+  const x=g.x,w=g.w,h=g.h;
+  if(!m.contribAvg||m.contribAvg<=0){msg(x,w,h,"Define una cartera con contribución positiva");return;}
+  const N=16,vals=[];
+  for(let n=0;n<=N;n++)vals.push(n*m.contribAvg-m.opexFixed);
+  const maxPos=Math.max.apply(null,vals.concat([0]));
+  const maxNeg=Math.max.apply(null,vals.map(v=>-v).concat([1]));
+  const padL=6,padR=6,padT=14,padB=18;
+  const plotH=h-padT-padB,plotW=w-padL-padR;
+  const zeroY=padT+plotH*(maxPos/(maxPos+maxNeg));
+  const scale=plotH/(maxPos+maxNeg);
+  const bw=plotW/(N+1);
+  x.strokeStyle="#29405d";x.beginPath();x.moveTo(padL,zeroY);x.lineTo(w-padR,zeroY);x.stroke();
+  vals.forEach((v,i)=>{
+    const bh=Math.abs(v)*scale,X=padL+i*bw;
+    x.fillStyle=v>=0?"#35d39a":"#ff6f7d";
+    x.fillRect(X+1.5,v>=0?zeroY-bh:zeroY,Math.max(1,bw-3),bh);
+  });
+  if(m.beTotal!==null&&m.beTotal<=N){
+    const X=padL+m.beTotal*bw+bw/2;
+    x.strokeStyle="#ffca6b";x.setLineDash([3,3]);x.beginPath();x.moveTo(X,padT-4);x.lineTo(X,h-padB);x.stroke();x.setLineDash([]);
+    x.fillStyle="#ffca6b";x.font="10px system-ui";x.textAlign="center";x.fillText("PE "+m.beTotal,X,padT-7>8?padT-7:9);
+  }
+  x.fillStyle="#91a4ba";x.font="9.5px system-ui";x.textAlign="center";
+  [0,4,8,12,16].forEach(n=>x.fillText(String(n),padL+n*bw+bw/2,h-5));
+  x.textAlign="left";x.fillText("nº de clientes",padL,11);
+}
+function mixChart(m){
+  const g=ctx2d("mixChart");if(!g)return;
+  const x=g.x,w=g.w,h=g.h;
+  const N=m.clients>0?m.clients:(m.target||8);
+  const items=m.segs.map(sg=>{
+    const gross=sg.contribPer*N,rev=sg.revPer*N;
+    const oper=gross-m.opexFixed-rev*m.resR;
+    return {n:N+" × "+sg.name,v:oper-Math.max(0,oper)*m.taxR,mix:false};
+  });
+  if(m.clients>0){
+    const gross=m.contribAvg*N,rev=m.ticketAvg*N;
+    const oper=gross-m.opexFixed-rev*m.resR;
+    items.push({n:"Mix actual",v:oper-Math.max(0,oper)*m.taxR,mix:true});
+  }
+  const data=items.slice(0,5);
+  if(!data.length){msg(x,w,h,"Agrega segmentos de clientes");return;}
+  const maxPos=Math.max.apply(null,data.map(d=>d.v).concat([0]));
+  const maxNeg=Math.max.apply(null,data.map(d=>-d.v).concat([1]));
+  const padL=8,padR=8,padT=18,padB=34;
+  const plotH=h-padT-padB,plotW=w-padL-padR;
+  const zeroY=padT+plotH*(maxPos/(maxPos+maxNeg));
+  const scale=plotH/(maxPos+maxNeg);
+  const slot=plotW/data.length,bw=Math.min(slot-14,86);
+  x.strokeStyle="#29405d";x.beginPath();x.moveTo(padL,zeroY);x.lineTo(w-padR,zeroY);x.stroke();
+  data.forEach((d,i)=>{
+    const bh=Math.abs(d.v)*scale;
+    const X=padL+i*slot+(slot-bw)/2;
+    x.fillStyle=d.mix?"#63a7ff":(d.v>=0?"#35d39a":"#ff6f7d");
+    x.fillRect(X,d.v>=0?zeroY-bh:zeroY,bw,bh);
+    x.fillStyle="#edf5ff";x.font="700 10px system-ui";x.textAlign="center";
+    x.fillText(moneyM(d.v),X+bw/2,d.v>=0?zeroY-bh-4:zeroY+bh+11);
+    x.fillStyle="#91a4ba";x.font="9.5px system-ui";
+    wrapLabel(d.n,18).forEach((ln,li)=>x.fillText(ln,X+bw/2,h-19+(li?11:0)));
+  });
+}
+function capChart(m){
+  const g=ctx2d("capChart");if(!g)return;
+  const x=g.x,w=g.w,h=g.h;
+  if(!m.hoursAvgPerClient||!m.hoursAvail){msg(x,w,h,"Define clientes con horas y equipo con horas a clientes");return;}
+  const nmax=Math.max(m.maxClients+4,m.clients+3,6);
+  const maxH=Math.max(m.hoursAvail*1.12,nmax*m.hoursAvgPerClient*1.05);
+  const padL=36,padR=10,padT=14,padB=18;
+  const px=n=>padL+(w-padL-padR)*n/nmax;
+  const py=v=>h-padB-(h-padT-padB)*(v/maxH);
+  x.strokeStyle="#1c2c42";x.fillStyle="#91a4ba";x.font="9.5px system-ui";x.textAlign="right";
+  [0,0.5,1].forEach(k=>{
+    const v=maxH*k,Y=py(v);
+    x.beginPath();x.moveTo(padL,Y);x.lineTo(w-padR,Y);x.stroke();
+    x.fillText(Math.round(v)+"h",padL-4,Y+3);
+  });
+  x.strokeStyle="#63a7ff";x.lineWidth=2;x.beginPath();
+  for(let n=0;n<=nmax;n++){
+    const X=px(n),Y=py(Math.min(n*m.hoursAvgPerClient,maxH));
+    if(n)x.lineTo(X,Y);else x.moveTo(X,Y);
+  }
+  x.stroke();x.lineWidth=1;
+  const cy=py(m.hoursAvail);
+  x.strokeStyle="#ffca6b";x.setLineDash([4,4]);x.beginPath();x.moveTo(padL,cy);x.lineTo(w-padR,cy);x.stroke();x.setLineDash([]);
+  x.fillStyle="#ffca6b";x.textAlign="left";x.fillText("capacidad "+Math.round(m.hoursAvail)+"h",padL+2,cy-4);
+  const mc=Math.min(m.maxClients,nmax);
+  x.fillStyle="#edf5ff";x.beginPath();x.arc(px(mc),py(Math.min(mc*m.hoursAvgPerClient,maxH)),3,0,Math.PI*2);x.fill();
+  x.fillStyle="#91a4ba";x.textAlign="center";
+  [0,Math.round(nmax/2),nmax].forEach(n=>x.fillText(String(n),px(n),h-5));
+}
+function drawCharts(m){
+  donut("revenueChart",m.segs.filter(x=>x.qty>0).map(x=>({n:x.name,v:x.rev})),"Ingresos",moneyM(m.revenue));
+  const costItems=[
+    {n:"Contenido",v:m.direct},{n:"Nómina",v:m.payroll},{n:"Tecnología",v:m.tech},
+    {n:"Otros gastos",v:m.ops},{n:"Reserva",v:m.reserve},{n:"Impuestos",v:m.tax}
+  ];
+  donut("costChart",costItems,"Costos",moneyM(costItems.reduce((a,d)=>a+d.v,0)));
+  breakChart(m);
+  mixChart(m);
+  capChart(m);
+}
+function canon(o){
+  if(Array.isArray(o))return "["+o.map(canon).join(",")+"]";
+  if(o&&typeof o==="object")return "{"+Object.keys(o).sort().map(k=>JSON.stringify(k)+":"+canon(o[k])).join(",")+"}";
+  return JSON.stringify(o);
+}
+function updatePresetStates(){
+  const set=(id,on)=>{const el=$(id);if(el&&el.classList)el.classList.toggle("active",!!on);};
+  const socios=s.staff.filter(x=>/socio/i.test(x.name));
+  set("presetStaff3",socios.length>0&&socios.every(x=>(+x.cost||0)===3000000));
+  set("presetStaff6",socios.length>0&&socios.every(x=>(+x.cost||0)===6000000));
+  const colTotal=s.clients.filter(c=>c.currency==="COP").reduce((a,c)=>a+(+c.qty||0),0);
+  const intlTotal=s.clients.filter(c=>c.currency==="USD").reduce((a,c)=>a+(+c.qty||0),0);
+  set("presetCol8",colTotal===8&&intlTotal===0);
+  set("presetMix",colTotal===4&&intlTotal===4);
+  set("presetIntl8",colTotal===0&&intlTotal===8);
+  set("presetBase",canon(s)===canon(initial));
+}
+function calc(){
+  const m=compute();
+  updatePresetStates();
+  updateSums(m);
+  renderKPIs(m);
+  renderQuick(m);
+  renderPnl(m);
+  renderRatios(m);
+  renderSegTable(m);
+  renderScenarios(m);
+  renderCapacity(m);
+  renderAdvanced(m);
+  renderContentBox(m);
+  drawCharts(m);
+}
+function render(){
+  Object.keys(IDMAP).forEach(k=>{const p=IDMAP[k];$(k).value=p.length===1?s[p[0]]:s[p[0]][p[1]];});
+  renderList("clients","clients",CLIENT_FIELDS);
+  renderList("staff","staff",STAFF_FIELDS);
+  renderList("tech","tech",SIMPLE_FIELDS);
+  renderList("ops","ops",SIMPLE_FIELDS);
+  calc();
+}
+
+let flashT;
+function flash(t){
+  const el=$("status");el.textContent=t;el.style.opacity=1;
+  clearTimeout(flashT);flashT=setTimeout(()=>{el.style.opacity=0;},1900);
+}
+
+document.addEventListener("input",e=>{
+  const t=e.target;
+  if(t.dataset&&t.dataset.key){
+    const it=s[t.dataset.key]&&s[t.dataset.key][+t.dataset.i];
+    if(it){it[t.dataset.field]=t.type==="number"?(+t.value||0):t.value;calc();}
+    return;
+  }
+  if(t.id&&IDMAP[t.id]){setById(t.id,t.type==="number"?(+t.value||0):t.value);calc();}
+});
+document.addEventListener("change",e=>{
+  const t=e.target;
+  if(t.dataset&&t.dataset.key){
+    const it=s[t.dataset.key]&&s[t.dataset.key][+t.dataset.i];
+    if(it){it[t.dataset.field]=t.type==="number"?(+t.value||0):t.value;calc();}
+  }
+});
+document.addEventListener("click",e=>{
+  const t=e.target.closest("button[data-remove]");
+  if(!t)return;
+  s[t.dataset.remove].splice(+t.dataset.i,1);render();
+});
+
+function add(k,o){s[k].push(o);render();}
+$("addClient").onclick=()=>add("clients",{name:"Nuevo segmento",qty:1,ticket:4000000,currency:"COP",editorCost:400,clientPays:200,hours:35});
+$("addStaff").onclick=()=>add("staff",{name:"Nueva persona",cost:3000000,hours:160,clientHours:78});
+$("addTech").onclick=()=>add("tech",{name:"Nueva herramienta",cost:0});
+$("addOps").onclick=()=>add("ops",{name:"Nuevo gasto",cost:0});
+$("resetClients").onclick=()=>{s.clients=clone(initial.clients);render();};
+$("resetStaff").onclick=()=>{s.staff=clone(initial.staff);render();};
+$("resetTech").onclick=()=>{s.tech=clone(initial.tech);render();};
+$("resetOps").onclick=()=>{s.ops=clone(initial.ops);render();};
+
+$("presetBase").onclick=()=>{s=clone(initial);render();flash("Valores base restaurados");};
+function staffPreset(cost){
+  const targets=s.staff.filter(x=>/socio/i.test(x.name));
+  if(!targets.length){flash("No hay personas con 'Socio' en el nombre");return;}
+  targets.forEach(x=>x.cost=cost);
+  render();flash("Socios a "+moneyM(cost));
+}
+$("presetStaff3").onclick=()=>staffPreset(3000000);
+$("presetStaff6").onclick=()=>staffPreset(6000000);
+function findSeg(cur){return s.clients.findIndex(c=>c.currency===cur);}
+function ensureSeg(cur,name,ticket){
+  let i=findSeg(cur);
+  if(i===-1){
+    s.clients.push({name,ticket,currency:cur,qty:0,editorCost:400,clientPays:200,hours:35});
+    i=s.clients.length-1;
+  }
+  return i;
+}
+function portfolioPreset(colQty,intlQty,label){
+  const iCol=colQty>0?ensureSeg("COP","Colombia · $4M",4000000):findSeg("COP");
+  const iIntl=intlQty>0?ensureSeg("USD","Internacional · USD 2.000",2000):findSeg("USD");
+  s.clients.forEach((c,i)=>{if(i!==iCol&&i!==iIntl)c.qty=0;});
+  if(iCol>-1)s.clients[iCol].qty=colQty;
+  if(iIntl>-1)s.clients[iIntl].qty=intlQty;
+  render();flash("Cartera: "+label);
+}
+$("presetCol8").onclick=()=>portfolioPreset(8,0,"8 Colombia");
+$("presetMix").onclick=()=>portfolioPreset(4,4,"4 Colombia + 4 internacionales");
+$("presetIntl8").onclick=()=>portfolioPreset(0,8,"8 internacionales");
+
+$("save").onclick=()=>{try{localStorage.setItem(KEY,JSON.stringify(s));flash("Guardado");}catch(e){flash("No se pudo guardar");}};
+$("load").onclick=()=>{
+  const raw=localStorage.getItem(KEY);
+  if(!raw){flash("No hay nada guardado");return;}
+  try{s=normalize(JSON.parse(raw));render();flash("Cargado");}catch(e){flash("Error al cargar");}
+};
+$("clear").onclick=()=>{localStorage.removeItem(KEY);flash("Configuración guardada borrada");};
+$("exportBtn").onclick=()=>{
+  const blob=new Blob([JSON.stringify(s,null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);a.download="nodus-modelo.json";a.click();
+  URL.revokeObjectURL(a.href);flash("Exportado");
+};
+$("importFile").onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{s=normalize(JSON.parse(r.result));render();flash("Importado");}catch(err){flash("Archivo inválido");}};
+  r.readAsText(f);e.target.value="";
+};
+
+document.querySelectorAll(".tabs button").forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll(".tabs button").forEach(z=>z.classList.toggle("active",z===b));
+    document.querySelectorAll(".tabpane").forEach(p=>p.classList.toggle("active",p.id==="tab-"+b.dataset.tab));
+    calc();
+  };
+});
+
+let rt;
+addEventListener("resize",()=>{clearTimeout(rt);rt=setTimeout(calc,150);});
+render();
+</script>
+</body>
+</html>
